@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MediSync - Prova</title>
+  <style>
+    :root{--bg:#f6f7fb;--card:#ffffff;--accent:#4f46e5;--muted:#6b7280}
+    *{box-sizing:border-box;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
+    body{margin:0;background:linear-gradient(180deg,#eef2ff 0%,var(--bg) 100%);color:#111}
+    header{background:var(--card);padding:18px 24px;border-bottom:1px solid #e6e9f2;display:flex;gap:16px;align-items:center}
+    header h1{margin:0;font-size:18px;color:var(--accent)}
+    .container{max-width:1100px;margin:24px auto;padding:0 18px}
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
+    .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(22,28,45,0.06)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input,select,textarea,button{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9f2;font-size:14px}
+    button{cursor:pointer;background:var(--accent);color:white;border:none}
+    .small{font-size:13px;color:var(--muted)}
+    .pro-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .pro-item{padding:10px;border-radius:8px;border:1px dashed #eef2ff;display:flex;justify-content:space-between;align-items:center}
+    .slots{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .slot{padding:6px 8px;border-radius:8px;border:1px solid #e6e9f2;font-size:13px}
+    .slot.taken{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+    .slot.selected{background:#eef2ff;border-color:#c7d2fe;color:#1e40af}
+    .appointments{display:flex;flex-direction:column;gap:10px}
+    .appt{display:flex;justify-content:space-between;gap:8px;padding:10px;border-radius:8px;border-left:4px solid var(--accent);}
+    .actions{display:flex;gap:8px}
+    .muted{color:var(--muted)}
+    .topbar{display:flex;gap:8px;align-items:center}
+    @media(max-width:880px){.grid{grid-template-columns:1fr;}.container{padding:0 12px}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>MediSync )</div>
+  </header>
+
+  <div class="container">
+    <div class="grid">
+      <!-- Left column: criação / seleção -->
+      <div>
+        <div class="card">
+          <h3>Novo profissional</h3>
+          <div class="small">Adicione médicos/terapeutas para aparecerem na lista</div>
+          <div style="margin-top:10px">
+            <label>Nome</label>
+            <input id="proName" placeholder="Dr. João Silva" />
+            <label style="margin-top:8px">Especialidade</label>
+            <input id="proSpecialty" placeholder="Cardiologia / Psicologia" />
+            <label style="margin-top:8px">Intervalo de agenda (min)</label>
+            <select id="slotInterval"><option value="15">15</option><option value="30" selected>30</option><option value="60">60</option></select>
+            <label style="margin-top:8px">Horário de trabalho</label>
+            <div style="display:flex;gap:8px"><input id="workStart" type="time" value="09:00"/><input id="workEnd" type="time" value="17:00"/></div>
+            <button id="addPro" style="margin-top:10px">Adicionar profissional</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h3>Profissionais</h3>
+          <div class="small">Clique para selecionar e ver horários disponíveis</div>
+          <div id="proList" class="pro-list"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h3>Agendar consulta</h3>
+          <div class="small">Preencha os dados e escolha horário</div>
+          <label style="margin-top:8px">Paciente</label>
+          <input id="clientName" placeholder="Nome do paciente" />
+          <label style="margin-top:8px">Data</label>
+          <input id="date" type="date" />
+          <label style="margin-top:8px">Motivo / Observação</label>
+          <textarea id="note" rows="2" placeholder="Ex: revisão / primeira consulta"></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+            <button id="bookBtn">Reservar horário</button>
+            <button id="clearBtn" style="background:#e5e7eb;color:#111">Limpar</button>
+          </div>
+          <div id="slotRow" style="margin-top:10px"></div>
+        </div>
+
+      </div>
+
+      <!-- Right column: calendário / lista -->
+      <div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <h3 id="rightTitle">Agenda</h3>
+              <div class="small" id="selectedProMeta">Nenhum profissional selecionado</div>
+            </div>
+            <div class="topbar">
+              <input id="search" placeholder="Pesquisar paciente / especialidade" />
+              <button id="exportBtn" style="background:#10b981">Exportar CSV</button>
+              <button id="resetData" style="background:#ef4444">Apagar tudo</button>
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <label>Visualizar por data</label>
+            <input id="viewDate" type="date" />
+          </div>
+
+          <div style="margin-top:12px">
+            <h4>Compromissos</h4>
+            <div id="appointments" class="appointments"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h3>Instruções rápidas</h3>
+          <ul class="small">
+            <li>Adicione profissionais à esquerda.</li>
+            <li>Selecione um profissional para ver os horários.</li>
+            <li>Escolha data, paciente e clique em um horário para reservar.</li>
+            <li>O sistema salva os dados no <strong>localStorage</strong> do navegador.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ======= Estrutura de dados =======
+  // dados = { professionals: [{id,name,specialty,workStart,workEnd,interval}], appointments: [{id,proId,date,time,client,note,createdAt}] }
+
+  const STORAGE_KEY = 'schedulingData_v1';
+
+  // Carrega ou inicializa
+  let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || {professionals:[],appointments:[]};
+
+  // Selected state
+  let selectedProId = null;
+  let selectedSlot = null; // {time}
+
+  // Elementos
+  const proListEl = document.getElementById('proList');
+  const addProBtn = document.getElementById('addPro');
+  const bookBtn = document.getElementById('bookBtn');
+  const slotRow = document.getElementById('slotRow');
+  const appointmentsEl = document.getElementById('appointments');
+  const selectedProMeta = document.getElementById('selectedProMeta');
+  const rightTitle = document.getElementById('rightTitle');
+  const viewDate = document.getElementById('viewDate');
+  const dateInput = document.getElementById('date');
+  const searchInput = document.getElementById('search');
+  const exportBtn = document.getElementById('exportBtn');
+  const resetData = document.getElementById('resetData');
+  const clearBtn = document.getElementById('clearBtn');
+
+  // Helpers
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+
+  function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}
+
+  function timeToMinutes(t){const [hh,mm]=t.split(':').map(Number);return hh*60+mm}
+  function minutesToTime(m){const hh=String(Math.floor(m/60)).padStart(2,'0');const mm=String(m%60).padStart(2,'0');return hh+':'+mm}
+
+  // Gera slots entre start-end com intervalo
+  function generateSlots(start, end, interval){
+    const s = timeToMinutes(start); const e = timeToMinutes(end);
+    const arr=[]; for(let t=s;t+interval<=e;t+=interval) arr.push(minutesToTime(t));
+    return arr;
+  }
+
+  // Render lista de profissionais
+  function renderProList(){
+    proListEl.innerHTML='';
+    if(data.professionals.length===0){proListEl.innerHTML='<div class="muted">Nenhum profissional cadastrado.</div>';return}
+    data.professionals.forEach(p=>{
+      const div=document.createElement('div');div.className='pro-item';
+      div.innerHTML=`<div><strong>${p.name}</strong><div class="small">${p.specialty}</div></div>`;
+      const btns=document.createElement('div');
+      const sel=document.createElement('button');sel.textContent='Selecionar';sel.style.background='#e0e7ff';sel.style.color='#1e3a8a';sel.onclick=()=>{selectedProId=p.id;selectedSlot=null;renderSelectedPro();renderSlots();renderAppointments();}
+      const del=document.createElement('button');del.textContent='Remover';del.style.background='#fff1f2';del.style.color='#991b1b';del.onclick=()=>{if(confirm('Remover profissional e todos os agendamentos relacionados?')){data.professionals=data.professionals.filter(x=>x.id!==p.id);data.appointments=data.appointments.filter(a=>a.proId!==p.id);save();if(selectedProId===p.id)selectedProId=null;renderAll();}}
+      btns.appendChild(sel);btns.appendChild(del);div.appendChild(btns);proListEl.appendChild(div);
+    });
+  }
+
+  // Render informações do profissional selecionado
+  function renderSelectedPro(){
+    const p = data.professionals.find(x=>x.id===selectedProId);
+    if(!p){selectedProMeta.textContent='Nenhum profissional selecionado';rightTitle.textContent='Agenda';return}
+    selectedProMeta.textContent = `${p.name} — ${p.specialty} • intervalo ${p.interval}min • ${p.workStart}–${p.workEnd}`;
+    rightTitle.textContent = `Agenda — ${p.name}`;
+  }
+
+  // Render slots para a data escolhida
+  function renderSlots(){
+    slotRow.innerHTML=''; selectedSlot=null;
+    const p = data.professionals.find(x=>x.id===selectedProId);
+    const date = dateInput.value;
+    if(!p){slotRow.innerHTML='<div class="muted">Selecione um profissional à esquerda.</div>';return}
+    if(!date){slotRow.innerHTML='<div class="muted">Selecione uma data.</div>';return}
+    const slots = generateSlots(p.workStart,p.workEnd,Number(p.interval));
+    const takenForDate = data.appointments.filter(a=>a.proId===p.id && a.date===date).map(a=>a.time);
+    const container=document.createElement('div');container.className='slots';
+    slots.forEach(s=>{
+      const btn=document.createElement('button');btn.className='slot';btn.textContent=s;
+      if(takenForDate.includes(s)){btn.classList.add('taken');btn.disabled=true}
+      btn.onclick=()=>{document.querySelectorAll('.slot').forEach(x=>x.classList.remove('selected'));btn.classList.add('selected');selectedSlot=s}
+      container.appendChild(btn);
+    });
+    slotRow.appendChild(container);
+  }
+
+  // Render compromissos (filtro por data/search)
+  function renderAppointments(){
+    appointmentsEl.innerHTML='';
+    const filterDate = viewDate.value || null;
+    const query = searchInput.value.trim().toLowerCase();
+    let list = data.appointments.slice().sort((a,b)=> a.date===b.date? a.time.localeCompare(b.time) : a.date.localeCompare(b.date));
+    if(selectedProId) list = list.filter(x=>x.proId===selectedProId);
+    if(filterDate) list = list.filter(x=>x.date===filterDate);
+    if(query){list = list.filter(a=>{const p = data.professionals.find(pr=>pr.id===a.proId); return a.client.toLowerCase().includes(query) || a.note.toLowerCase().includes(query) || (p && p.specialty.toLowerCase().includes(query)) || (p && p.name.toLowerCase().includes(query))})}
+    if(list.length===0){appointmentsEl.innerHTML='<div class="muted">Nenhum compromisso encontrado.</div>';return}
+    list.forEach(a=>{
+      const p = data.professionals.find(pr=>pr.id===a.proId) || {name:'--',specialty:'--'};
+      const div=document.createElement('div');div.className='appt';
+      div.innerHTML=`<div>
+        <strong>${a.client}</strong>
+        <div class="small">${a.date} • ${a.time} — ${p.name} (${p.specialty})</div>
+        <div class="small">${a.note||''}</div>
+      </div>`;
+      const actions=document.createElement('div');actions.className='actions';
+      const cancel=document.createElement('button');cancel.textContent='Cancelar';cancel.style.background='#fee2e2';cancel.style.color='#991b1b';cancel.onclick=()=>{if(confirm('Cancelar esse agendamento?')){data.appointments=data.appointments.filter(x=>x.id!==a.id);save();renderSlots();renderAppointments();}}
+      const edit=document.createElement('button');edit.textContent='Editar';edit.style.background='#fff7ed';edit.style.color='#92400e';edit.onclick=()=>{ // preenche form para edição (simples)
+        selectedProId=a.proId;renderSelectedPro();dateInput.value=a.date;document.getElementById('clientName').value=a.client;document.getElementById('note').value=a.note;renderSlots();setTimeout(()=>{document.querySelectorAll('.slot').forEach(s=>{if(s.textContent===a.time){s.click();}})},60);
+        // remove antigo para que ao salvar crie novo (simulando edição)
+        data.appointments = data.appointments.filter(x=>x.id!==a.id);save();renderAppointments();
+      }
+      actions.appendChild(edit);actions.appendChild(cancel);div.appendChild(actions);appointmentsEl.appendChild(div);
+    });
+  }
+
+  // Adicionar profissional
+  addProBtn.onclick=()=>{
+    const name=document.getElementById('proName').value.trim();
+    const specialty=document.getElementById('proSpecialty').value.trim();
+    const interval=document.getElementById('slotInterval').value;
+    const workStart=document.getElementById('workStart').value;
+    const workEnd=document.getElementById('workEnd').value;
+    if(!name||!specialty){alert('Preencha nome e especialidade');return}
+    if(timeToMinutes(workEnd)<=timeToMinutes(workStart)){alert('Horário final deve ser depois do início');return}
+    const pro={id:uid(),name,specialty,interval: Number(interval),workStart,workEnd};
+    data.professionals.push(pro);save();renderAll();
+    document.getElementById('proName').value='';document.getElementById('proSpecialty').value='';
+  }
+
+  // Reservar horário
+  bookBtn.onclick=()=>{
+    const client=document.getElementById('clientName').value.trim();
+    const date=document.getElementById('date').value;
+    const note=document.getElementById('note').value.trim();
+    if(!selectedProId){alert('Selecione um profissional');return}
+    if(!date){alert('Escolha uma data');return}
+    if(!client){alert('Preencha o nome do paciente');return}
+    if(!selectedSlot){alert('Escolha um horário clicando em um dos horários disponíveis');return}
+    // checar conflito
+    const exists = data.appointments.some(a=>a.proId===selectedProId && a.date===date && a.time===selectedSlot);
+    if(exists){alert('Horário já ocupado');renderSlots();return}
+    const appt={id:uid(),proId:selectedProId,date,time:selectedSlot,client,note,createdAt:new Date().toISOString()};
+    data.appointments.push(appt);save();
+    // feedback
+    alert('Agendamento realizado: '+date+' '+selectedSlot);
+    // limpar seleção
+    document.getElementById('clientName').value='';document.getElementById('note').value='';selectedSlot=null;renderAll();
+  }
+
+  // Export CSV
+  exportBtn.onclick=()=>{
+    if(data.appointments.length===0){alert('Sem agendamentos para exportar');return}
+    const header=['id,profissional,especialidade,data,horario,paciente,nota,criadoEm'];
+    const rows = data.appointments.map(a=>{
+      const p=data.professionals.find(pr=>pr.id===a.proId) || {name:'--',specialty:'--'};
+      return `${a.id},"${p.name}","${p.specialty}",${a.date},${a.time},"${a.client}","${(a.note||'').replace(/\"/g,'"')}",${a.createdAt}`;
+    });
+    const csv = header.concat(rows).join('\n');
+    const blob = new Blob([csv],{type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');a.href=url;a.download='agendamentos.csv';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  }
+
+  // Reset data
+  resetData.onclick=()=>{if(confirm('Apagar todos os dados? Isso não pode ser desfeito.')){localStorage.removeItem(STORAGE_KEY);data={professionals:[],appointments:[]};selectedProId=null;renderAll();}}
+
+  clearBtn.onclick=()=>{document.getElementById('clientName').value='';document.getElementById('note').value='';dateInput.value='';slotRow.innerHTML='';selectedSlot=null;}
+
+  // Handlers de input
+  dateInput.onchange = ()=> renderSlots();
+  viewDate.onchange = ()=> renderAppointments();
+  searchInput.oninput = ()=> renderAppointments();
+
+  // Render everything
+  function renderAll(){renderProList();renderSelectedPro();renderSlots();renderAppointments();}
+
+  // Inicialização: se estiver vazio, cria alguns profissionais de exemplo para facilitar a prova
+  if(data.professionals.length===0){
+    data.professionals.push({id:uid(),name:'Dra. Ana Pereira',specialty:'Psicologia',workStart:'09:00',workEnd:'17:00',interval:30});
+    data.professionals.push({id:uid(),name:'Dr. Carlos Souza',specialty:'Clínico Geral',workStart:'08:00',workEnd:'12:00',interval:20});
+    save();
+  }
+
+  renderAll();
+
+  // Pequenos testes automáticos (comentar se for preciso)
+  // console.log('Sistema pronto. Data:',data);
+  </script>
+</body>
+</html>
