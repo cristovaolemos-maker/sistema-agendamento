@@ -1,0 +1,7 @@
+console.log("MediSync online");
+
+// Aqui vai o código que gerencia:
+// - cadastro
+// - agendamentos
+// - listagem
+// - localStorage
